@@ -1,9 +1,16 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Microsoft.Extensions.Configuration;
 using PuppeteerSharp;
 
-Console.WriteLine("Hello, World!");
 
-string outputFile = @"C:\Users\alexi\OneDrive\Desktop\gg.jpg";
+var builder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true, true);
+var config = builder.Build();
+
+var email = config["login:Email"];
+var password = config["login:Password"];
+var signInUrl = config["login:url"];
+var stockUrl = config["stock:url"];
+
 await new BrowserFetcher(Product.Chrome).DownloadAsync();
 
 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
@@ -12,29 +19,39 @@ var browser = await Puppeteer.LaunchAsync(new LaunchOptions
     Headless = false
 });
 
+// Setup 
 var page = await browser.NewPageAsync();
 await page.SetViewportAsync(new ViewPortOptions() { Width = 1920, Height = 1080 });
-await page.GoToAsync("https://app.tcgpowertools.com/signin");
+
+// Navigate to sign in page
+await page.GoToAsync(signInUrl);
+
 // Wait for the selector to appear
-await page.WaitForSelectorAsync(".o--FormGroup--formGroup input");
-await page.FocusAsync(".o--FormGroup--formGroup input");
-await page.Keyboard.TypeAsync("");
-await page.Keyboard.PressAsync("Escape");
-await page.Keyboard.PressAsync("Tab");
-await page.Keyboard.TypeAsync("");
+await page.WaitForSelectorAsync(StockOptionsSelector.InputFormSelector);
+await page.FocusAsync(StockOptionsSelector.InputFormSelector);
+
+// Enter the credentials
+await page.Keyboard.TypeAsync(email);
+await page.Keyboard.PressAsync(StockOptionsSelector.EscapeKey);
+await page.Keyboard.PressAsync(StockOptionsSelector.TabKey);
+await page.Keyboard.TypeAsync(password);
 
 
-
-await page.ClickAsync(".o--Button--children");
+// Login
+await page.ClickAsync(StockOptionsSelector.SubmitForm);
 await page.WaitForNavigationAsync();
 
-await page.GoToAsync(page.Url + "stock-pricing");
+// Go to Stock Page
+await page.GoToAsync(page.Url + stockUrl);
 
+// Open export window
+await page.WaitForSelectorAsync(StockOptionsSelector.OpenExportButton);
+await page.ClickAsync(StockOptionsSelector.OpenExportButton);
 
-await page.ClickAsync("li[data-testid='open-export-csv-dialog-btn']");
+// Click download
+await page.WaitForSelectorAsync(StockOptionsSelector.DownloadButton);
+await page.ClickAsync(StockOptionsSelector.DownloadButton);
+//Thread.Sleep(10000); // Chill for the download 
 
-// MuiBox-root jss792
-
-// .MuiDialogContent-root a 
-await page.ScreenshotAsync(outputFile);
 await page.CloseAsync();
+
