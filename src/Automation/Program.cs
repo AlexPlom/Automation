@@ -28,5 +28,13 @@ await page.Keyboard.TypeAsync("");
 await page.ClickAsync(".o--Button--children");
 await page.WaitForNavigationAsync();
 
+await page.GoToAsync(page.Url + "stock-pricing");
+
+
+await page.ClickAsync("li[data-testid='open-export-csv-dialog-btn']");
+
+// MuiBox-root jss792
+
+// .MuiDialogContent-root a 
 await page.ScreenshotAsync(outputFile);
 await page.CloseAsync();
